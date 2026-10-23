@@ -83,6 +83,25 @@
             border-radius: 8px;
             min-height: 20px;
         }
+
+        .coming-soon {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: #2a2a2a;
+            border-radius: 12px;
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .disclaimer {
+            font-size: 0.75rem;
+            color: #666;
+            text-align: center;
+            margin-top: 20px;
+            line-height: 1.4;
+        }
     </style>
 </head>
 <body>
@@ -107,20 +126,21 @@
         <label>Effects</label>
         <div class="row">
             <button onclick="run('wave')">Wave</button>
-            <button onclick="run('progress 50')">50% Bar</button>
-            <button onclick="run('progress 100')">100% Bar</button>
         </div>
     </div>
     
-    <div class="card">
-        <label>Individual LED (0-25)</label>
-        <div class="row">
-            <input type="number" id="led-id" value="0" min="0" max="25" style="width: 60px; padding: 10px; border-radius: 8px; border: none; background: #333; color: white; text-align: center;">
-            <input type="range" id="led-val" min="0" max="255" value="255" onchange="run('led ' + document.getElementById('led-id').value + ' ' + this.value)">
+    <div class="card" style="padding: 0;">
+        <div class="coming-soon">
+            <span>Individual LED Control</span>
+            <span style="font-size: 0.8rem; background: #444; padding: 4px 8px; border-radius: 4px;">Coming Soon</span>
         </div>
     </div>
 
     <div class="status-bar" id="status">Ready</div>
+
+    <div class="disclaimer">
+        Experimental module. We are not responsible for any damage to your device or Glyph LEDs caused by using manual commands or experimental features.
+    </div>
 
     <script>
         async function run(cmd) {
@@ -128,43 +148,29 @@
             statusEl.textContent = `> glyphctl ${cmd}`;
             
             try {
-                // Вариант 1: Мост ReSukiSU / SukiSU
                 if (typeof ksuwebui !== 'undefined') {
                     const res = ksuwebui.exec(`/system/bin/glyphctl ${cmd}`);
                     statusEl.textContent = res ? res.trim() : 'OK (no output)';
                     return;
                 } 
-                
-                // Вариант 2: Официальный KernelSU / Magisk
                 if (typeof ksu !== 'undefined') {
                     ksu.exec(`/system/bin/glyphctl ${cmd}`, '{}', (errno, stdout, stderr) => {
-                        if (errno !== 0) {
-                            statusEl.textContent = `Error (${errno}): ${stderr}`;
-                        } else {
-                            statusEl.textContent = stdout.trim() || 'OK (no output)';
-                        }
+                        if (errno !== 0) statusEl.textContent = `Error (${errno}): ${stderr}`;
+                        else statusEl.textContent = stdout.trim() || 'OK (no output)';
                     });
                     return;
                 }
-                
-                // Вариант 3: Старый способ через глобальный exec (если есть)
                 if (typeof exec === 'function') {
                     const res = await exec(`/system/bin/glyphctl ${cmd}`);
-                    if (res.errno !== 0) {
-                        statusEl.textContent = `Error: ${res.stderr}`;
-                    } else {
-                        statusEl.textContent = res.stdout.trim();
-                    }
+                    statusEl.textContent = res.errno !== 0 ? `Error: ${res.stderr}` : res.stdout.trim();
                     return;
                 }
-
-                statusEl.textContent = 'Error: no exec bridge found in this manager';
+                statusEl.textContent = 'Error: no exec bridge found';
             } catch (e) {
                 statusEl.textContent = `JS Error: ${e.message}`;
             }
         }
 
-        // Инициализация при открытии
         window.onload = () => run('status');
     </script>
 </body>
