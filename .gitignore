@@ -1,0 +1,6 @@
+# Compiled binary
+system/bin/glyphctl
+
+# Build artifacts
+*.zip
+*.o

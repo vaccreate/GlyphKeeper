@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Glyph Keeper</title>
+    <style>
+        :root {
+            --bg: #0f0f0f;
+            --card: #1e1e1e;
+            --accent: #ff2a55; /* Nothing red */
+            --text: #ffffff;
+            --text-dim: #888;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        h1 { font-size: 1.5rem; margin: 0; display: flex; align-items: center; gap: 10px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+        
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .row { display: flex; gap: 12px; }
+        
+        button {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            background: #333;
+            color: white;
+        }
+        button:active { transform: scale(0.96); }
+        button.primary { background: var(--text); color: var(--bg); }
+        button.danger { background: var(--accent); color: white; }
+        
+        label { font-size: 0.9rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: var(--text);
+            margin-top: -10px;
+            box-shadow: 0 0 10px rgba(255,255,255,0.3);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: #444;
+            border-radius: 2px;
+        }
+        
+        .status-bar {
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            text-align: center;
+            padding: 8px;
+            background: #000;
+            border-radius: 8px;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1><div class="dot"></div> Glyph Keeper</h1>
+
+    <div class="card">
+        <div class="row">
+            <button class="primary" onclick="run('start')">Start All</button>
+            <button class="danger" onclick="run('stop')">Stop All</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <label>Brightness: <span id="b-val">128</span></label>
+        <input type="range" id="slider" min="0" max="255" value="128" 
+               oninput="document.getElementById('b-val').textContent=this.value"
+               onchange="run('brightness ' + this.value)">
+    </div>
+
+    <div class="card">
+        <label>Effects</label>
+        <div class="row">
+            <button onclick="run('wave')">Wave</button>
+            <button onclick="run('progress 50')">50% Bar</button>
+            <button onclick="run('progress 100')">100% Bar</button>
+        </div>
+    </div>
+    
+    <div class="card">
+        <label>Individual LED (0-25)</label>
+        <div class="row">
+            <input type="number" id="led-id" value="0" min="0" max="25" style="width: 60px; padding: 10px; border-radius: 8px; border: none; background: #333; color: white; text-align: center;">
+            <input type="range" id="led-val" min="0" max="255" value="255" onchange="run('led ' + document.getElementById('led-id').value + ' ' + this.value)">
+        </div>
+    </div>
+
+    <div class="status-bar" id="status">Ready</div>
+
+    <script>
+        async function run(cmd) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = `> glyphctl ${cmd}`;
+            
+            try {
+                // Вариант 1: Мост ReSukiSU / SukiSU
+                if (typeof ksuwebui !== 'undefined') {
+                    const res = ksuwebui.exec(`/system/bin/glyphctl ${cmd}`);
+                    statusEl.textContent = res ? res.trim() : 'OK (no output)';
+                    return;
+                } 
+                
+                // Вариант 2: Официальный KernelSU / Magisk
+                if (typeof ksu !== 'undefined') {
+                    ksu.exec(`/system/bin/glyphctl ${cmd}`, '{}', (errno, stdout, stderr) => {
+                        if (errno !== 0) {
+                            statusEl.textContent = `Error (${errno}): ${stderr}`;
+                        } else {
+                            statusEl.textContent = stdout.trim() || 'OK (no output)';
+                        }
+                    });
+                    return;
+                }
+                
+                // Вариант 3: Старый способ через глобальный exec (если есть)
+                if (typeof exec === 'function') {
+                    const res = await exec(`/system/bin/glyphctl ${cmd}`);
+                    if (res.errno !== 0) {
+                        statusEl.textContent = `Error: ${res.stderr}`;
+                    } else {
+                        statusEl.textContent = res.stdout.trim();
+                    }
+                    return;
+                }
+
+                statusEl.textContent = 'Error: no exec bridge found in this manager';
+            } catch (e) {
+                statusEl.textContent = `JS Error: ${e.message}`;
+            }
+        }
+
+        // Инициализация при открытии
+        window.onload = () => run('status');
+    </script>
+</body>
+</html>
