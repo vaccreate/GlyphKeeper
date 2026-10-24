@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -8,12 +8,13 @@
         :root {
             --bg: #0f0f0f;
             --card: #1e1e1e;
-            --accent: #ff2a55; /* Nothing red */
+            --accent: #ff2a55;
             --text: #ffffff;
             --text-dim: #888;
+            --danger: #d50000;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
@@ -21,6 +22,7 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
+            overflow: hidden; /* Блокируем скролл, если открыт оверлей */
         }
         h1 { font-size: 1.5rem; margin: 0; display: flex; align-items: center; gap: 10px; }
         .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
@@ -50,6 +52,7 @@
         button:active { transform: scale(0.96); }
         button.primary { background: var(--text); color: var(--bg); }
         button.danger { background: var(--accent); color: white; }
+        button.recover { background: var(--danger); color: white; border: 1px solid #ff5555; }
         
         label { font-size: 0.9rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
         input[type=range] {
@@ -82,6 +85,7 @@
             background: #000;
             border-radius: 8px;
             min-height: 20px;
+            white-space: pre-wrap;
         }
 
         .coming-soon {
@@ -102,9 +106,59 @@
             margin-top: 20px;
             line-height: 1.4;
         }
+        .warning-text {
+            color: #ff8888;
+            font-weight: bold;
+        }
+
+        /* Стили для модального окна дисклеймера */
+        #disclaimer-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            z-index: 9999;
+            text-align: center;
+        }
+        #disclaimer-overlay h2 {
+            color: var(--accent);
+            margin-bottom: 16px;
+        }
+        #disclaimer-overlay p {
+            color: #ccc;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 24px;
+            max-width: 400px;
+        }
+        #disclaimer-overlay button {
+            background: var(--text);
+            color: var(--bg);
+            width: 100%;
+            max-width: 300px;
+            padding: 16px;
+            font-size: 1.1rem;
+        }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
+
+    <!-- Оверлей дисклеймера -->
+    <div id="disclaimer-overlay">
+        <h2>DISCLAIMER</h2>
+        <p>
+            This module is experimental. By proceeding, you acknowledge that you are using it at your own risk. 
+            The author is <b>not responsible</b> for any damage to your device, LEDs, or software instability.
+            <br><br>
+            The "Force Recover" function restarts the hardware driver and may freeze your device.
+        </p>
+        <button onclick="acceptDisclaimer()">I Understand & Agree</button>
+    </div>
 
     <h1><div class="dot"></div> Glyph Keeper</h1>
 
@@ -136,13 +190,36 @@
         </div>
     </div>
 
+    <div class="card">
+        <label style="color: var(--danger);">Troubleshooting</label>
+        <button class="recover" onclick="confirmRecover()">Force Recover Driver</button>
+    </div>
+
     <div class="status-bar" id="status">Ready</div>
 
     <div class="disclaimer">
-        Experimental module. We are not responsible for any damage to your device or Glyph LEDs caused by using manual commands or experimental features.
+        <span class="warning-text">WARNING:</span> "Force Recover" restarts the I2C driver. This may cause the device to freeze temporarily. If unresponsive, hold the Power button for 15-30 seconds to force a reboot.
     </div>
 
     <script>
+        // Проверка согласия при загрузке
+        window.onload = () => {
+            if (localStorage.getItem('glyph_disclaimer_accepted') === 'true') {
+                document.getElementById('disclaimer-overlay').classList.add('hidden');
+                document.body.style.overflow = 'auto'; // Возвращаем скролл
+                run('status');
+            } else {
+                document.body.style.overflow = 'hidden'; // Блокируем скролл
+            }
+        };
+
+        function acceptDisclaimer() {
+            localStorage.setItem('glyph_disclaimer_accepted', 'true');
+            document.getElementById('disclaimer-overlay').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            run('status');
+        }
+
         async function run(cmd) {
             const statusEl = document.getElementById('status');
             statusEl.textContent = `> glyphctl ${cmd}`;
@@ -171,7 +248,11 @@
             }
         }
 
-        window.onload = () => run('status');
+        function confirmRecover() {
+            if (confirm("WARNING: This will restart the LED driver. The phone may freeze. If it does, hold Power for 15-30s. Continue?")) {
+                run('recover');
+            }
+        }
     </script>
 </body>
 </html>
