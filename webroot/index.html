@@ -22,7 +22,7 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
-            overflow: hidden; /* Блокируем скролл, если открыт оверлей */
+            overflow: hidden;
         }
         h1 { font-size: 1.5rem; margin: 0; display: flex; align-items: center; gap: 10px; }
         .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
@@ -111,7 +111,6 @@
             font-weight: bold;
         }
 
-        /* Стили для модального окна дисклеймера */
         #disclaimer-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -148,7 +147,6 @@
 </head>
 <body>
 
-    <!-- Оверлей дисклеймера -->
     <div id="disclaimer-overlay">
         <h2>DISCLAIMER</h2>
         <p>
@@ -182,10 +180,18 @@
             <button onclick="run('wave')">Wave</button>
         </div>
     </div>
+
+    <div class="card">
+        <label>Flip to Glyph</label>
+        <div class="row">
+            <button class="primary" onclick="run('flip on')">Enable</button>
+            <button onclick="run('flip off')">Disable</button>
+        </div>
+    </div>
     
     <div class="card" style="padding: 0;">
         <div class="coming-soon">
-            <span>Individual LED Control</span>
+            <span>Audio Visualizer</span>
             <span style="font-size: 0.8rem; background: #444; padding: 4px 8px; border-radius: 4px;">Coming Soon</span>
         </div>
     </div>
@@ -202,14 +208,13 @@
     </div>
 
     <script>
-        // Проверка согласия при загрузке
         window.onload = () => {
             if (localStorage.getItem('glyph_disclaimer_accepted') === 'true') {
                 document.getElementById('disclaimer-overlay').classList.add('hidden');
-                document.body.style.overflow = 'auto'; // Возвращаем скролл
+                document.body.style.overflow = 'auto';
                 run('status');
             } else {
-                document.body.style.overflow = 'hidden'; // Блокируем скролл
+                document.body.style.overflow = 'hidden';
             }
         };
 
