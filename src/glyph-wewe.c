@@ -29,7 +29,6 @@ static void handle_sig(int sig) {
     if (sig == SIGUSR1) cancel_animation = 1; 
 }
 
-/* Мини-дисклеймер для CLI */
 static void print_disclaimer(void) {
     fprintf(stderr, "WARNING: Use at your own risk. The author is not responsible for any damage.\n");
 }
@@ -164,6 +163,25 @@ static int cmd_wave(void) {
     return 0;
 }
 
+/* Заполнение верхней полосы (0-24) */
+static int cmd_fill(int count) {
+    if (count < 0) count = 0;
+    if (count > 24) count = 24;
+    
+    cancel_animation = 1;
+    set_manual_mode();
+    set_brightness(0); 
+    
+    for (int i = 0; i < 24; i++) {
+        char buf[32];
+        int val = (i < count) ? 255 : 0;
+        snprintf(buf, sizeof(buf), "%d %d", i, val);
+        write_sysfs(SINGLE_FILE, buf);
+    }
+    printf("OK: Filled %d LEDs\n", count);
+    return 0;
+}
+
 static int cmd_status(void) {
     char mode[64] = "?";
     char hwid[64] = "?";
@@ -198,6 +216,18 @@ static int cmd_recover(void) {
     }
 }
 
+static int cmd_flip(int enable) {
+    if (enable) {
+        system("killall flipd 2>/dev/null");
+        system("setsid nohup /system/bin/flipd >/dev/null 2>&1 &");
+        printf("OK: Flip to Glyph ENABLED\n");
+    } else {
+        system("killall flipd 2>/dev/null");
+        printf("OK: Flip to Glyph DISABLED\n");
+    }
+    return 0;
+}
+
 static int execute_line(char *line) {
     while (*line == ' ' || *line == '\t') line++;
     size_t len = strlen(line);
@@ -218,8 +248,10 @@ static int execute_line(char *line) {
     if (strcmp(cmd, "start") == 0) return cmd_start();
     if (strcmp(cmd, "stop") == 0) return cmd_stop();
     if (strcmp(cmd, "wave") == 0) return cmd_wave();
+    if (strcmp(cmd, "fill") == 0 && arg1) return cmd_fill(atoi(arg1));
     if (strcmp(cmd, "status") == 0) return cmd_status();
     if (strcmp(cmd, "recover") == 0) return cmd_recover();
+    if (strcmp(cmd, "flip") == 0 && arg1) return cmd_flip(strcmp(arg1, "on") == 0);
     if (strcmp(cmd, "brightness") == 0 && arg1) return cmd_brightness(atoi(arg1));
     if (strcmp(cmd, "led") == 0 && arg1 && arg2) return cmd_led(atoi(arg1), atoi(arg2));
     
@@ -281,14 +313,13 @@ static int cmd_daemon(void) {
 }
 
 static void usage(const char *prog) {
-    fprintf(stderr, "Usage: %s <start|stop|status|wave|recover|brightness N|led ID N|daemon>\n", prog);
+    fprintf(stderr, "Usage: %s <start|stop|status|wave|fill N|recover|flip on/off|brightness N|led ID N|daemon>\n", prog);
 }
 
 int main(int argc, char *argv[]) {
     if (argc < 2) { usage(argv[0]); return 1; }
     const char *cmd = argv[1];
 
-    // Показываем предупреждение для всех команд, кроме status, чтобы не засорять вывод WebUI
     if (strcmp(cmd, "status") != 0 && strcmp(cmd, "daemon") != 0) {
         print_disclaimer();
     }
@@ -300,7 +331,9 @@ int main(int argc, char *argv[]) {
     if (strcmp(cmd, "recover") == 0) return cmd_recover();
     if (strcmp(cmd, "daemon") == 0) return cmd_daemon();
     if (strcmp(cmd, "brightness") == 0 && argc >= 3) return cmd_brightness(atoi(argv[2]));
+    if (strcmp(cmd, "fill") == 0 && argc >= 3) return cmd_fill(atoi(argv[2]));
     if (strcmp(cmd, "led") == 0 && argc >= 4) return cmd_led(atoi(argv[2]), atoi(argv[3]));
+    if (strcmp(cmd, "flip") == 0 && argc >= 3) return cmd_flip(strcmp(argv[2], "on") == 0);
     
     usage(argv[0]);
     return 1;

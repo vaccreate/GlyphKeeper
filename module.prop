@@ -1,6 +1,6 @@
 id=glyphkeeper
 name=Glyph Keeper
-version=1.4.1
-versionCode=7
+version=1.5
+versionCode=8
 author=CHBP_X
 description=Управление Glyph для Nothing Phone (2a) через sysfs. Обход сброса режима и ручное управление.
