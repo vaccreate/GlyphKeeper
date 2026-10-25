@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🟢 Glyph Keeper
+# 🌒 Glyph Keeper
 
 **Reclaiming Glyph control on Nothing Phone (2a).**
 
