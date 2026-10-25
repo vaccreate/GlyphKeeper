@@ -6,86 +6,156 @@
     <title>Glyph Keeper</title>
     <style>
         :root {
-            --bg: #0f0f0f;
-            --card: #1e1e1e;
-            --accent: #ff2a55;
-            --text: #ffffff;
-            --text-dim: #888;
+            --bg: #000000;
+            --surface: #121212;
+            --surface-light: #1e1e1e;
+            --accent: #ff2a55; /* Nothing Red */
+            --text-main: #ffffff;
+            --text-muted: #888888;
             --danger: #d50000;
+            --font-mono: 'Courier New', Courier, monospace;
         }
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg);
-            color: var(--text);
+            color: var(--text-main);
             margin: 0;
             padding: 16px;
             display: flex;
             flex-direction: column;
             gap: 16px;
             overflow: hidden;
+            /* Текстура из точек на фоне (как в Nothing OS) */
+            background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
         }
-        h1 { font-size: 1.5rem; margin: 0; display: flex; align-items: center; gap: 10px; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+
+        h1 { 
+            font-size: 1.8rem; 
+            margin: 0; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .dot { 
+            width: 14px; height: 14px; border-radius: 50%; 
+            background: var(--accent); 
+            box-shadow: 0 0 15px var(--accent); 
+        }
         
         .card {
-            background: var(--card);
-            border-radius: 16px;
-            padding: 20px;
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 24px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 20px;
+            border: 1px solid #222;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
+        
         .row { display: flex; gap: 12px; }
         
         button {
             flex: 1;
             padding: 16px;
             border: none;
-            border-radius: 12px;
+            border-radius: 14px;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s;
-            background: #333;
+            transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+            background: var(--surface-light);
             color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+            border: 1px solid #333;
         }
-        button:active { transform: scale(0.96); }
-        button.primary { background: var(--text); color: var(--bg); }
-        button.danger { background: var(--accent); color: white; }
-        button.recover { background: var(--danger); color: white; border: 1px solid #ff5555; }
+        button:active { transform: scale(0.95); background: #2a2a2a; }
         
-        label { font-size: 0.9rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+        button.primary { 
+            background: var(--text-main); 
+            color: var(--bg); 
+            border-color: var(--text-main);
+        }
+        button.primary:active { background: #cccccc; }
+        
+        button.danger { 
+            background: transparent; 
+            color: var(--accent); 
+            border: 1px solid var(--accent);
+        }
+        button.danger:active { background: rgba(255, 42, 85, 0.1); }
+
+        button.recover { 
+            background: transparent; 
+            color: var(--danger); 
+            border: 1px solid var(--danger);
+        }
+        
+        /* Слайдер */
+        label { 
+            font-size: 0.85rem; 
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            letter-spacing: 1.5px; 
+            font-weight: 600;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .slider-value {
+            font-family: var(--font-mono);
+            font-size: 1.2rem;
+            color: var(--text-main);
+            min-width: 40px;
+            text-align: right;
+        }
         input[type=range] {
             -webkit-appearance: none;
-            width: 100%;
+            flex: 1;
             background: transparent;
         }
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            height: 24px;
-            width: 24px;
+            height: 28px;
+            width: 28px;
             border-radius: 50%;
-            background: var(--text);
-            margin-top: -10px;
-            box-shadow: 0 0 10px rgba(255,255,255,0.3);
+            background: var(--text-main);
+            margin-top: -12px;
+            box-shadow: 0 0 10px rgba(255,255,255,0.2);
+            transition: transform 0.1s;
+        }
+        input[type=range]:active::-webkit-slider-thumb {
+            transform: scale(1.2);
+            background: var(--accent);
         }
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
             height: 4px;
-            background: #444;
+            background: #333;
             border-radius: 2px;
         }
         
+        /* Статус-бар */
         .status-bar {
-            font-family: monospace;
-            font-size: 0.8rem;
-            color: var(--text-dim);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--accent);
             text-align: center;
-            padding: 8px;
+            padding: 12px;
             background: #000;
-            border-radius: 8px;
+            border-radius: 12px;
+            border: 1px solid #222;
             min-height: 20px;
             white-space: pre-wrap;
+            transition: color 0.3s;
         }
 
         .coming-soon {
@@ -93,25 +163,36 @@
             align-items: center;
             justify-content: space-between;
             padding: 16px;
-            background: #2a2a2a;
-            border-radius: 12px;
-            opacity: 0.6;
+            background: var(--surface-light);
+            border-radius: 14px;
+            opacity: 0.5;
             cursor: not-allowed;
+            border: 1px dashed #444;
+        }
+        .badge {
+            font-size: 0.7rem; 
+            background: #333; 
+            padding: 4px 8px; 
+            border-radius: 6px; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .disclaimer {
             font-size: 0.75rem;
-            color: #666;
+            color: #555;
             text-align: center;
-            margin-top: 20px;
-            line-height: 1.4;
+            margin-top: 10px;
+            line-height: 1.5;
         }
-        .warning-text { color: #ff8888; font-weight: bold; }
+        .warning-text { color: var(--accent); font-weight: bold; }
 
+        /* Оверлей дисклеймера */
         #disclaimer-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(5px);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -119,10 +200,30 @@
             padding: 24px;
             z-index: 9999;
             text-align: center;
+            transition: opacity 0.3s;
         }
-        #disclaimer-overlay h2 { color: var(--accent); margin-bottom: 16px; }
-        #disclaimer-overlay p { color: #ccc; font-size: 0.9rem; line-height: 1.5; margin-bottom: 24px; max-width: 400px; }
-        #disclaimer-overlay button { background: var(--text); color: var(--bg); width: 100%; max-width: 300px; padding: 16px; font-size: 1.1rem; }
+        #disclaimer-overlay h2 { 
+            color: var(--accent); 
+            margin-bottom: 16px; 
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+        }
+        #disclaimer-overlay p { 
+            color: #aaa; 
+            font-size: 0.95rem; 
+            line-height: 1.6; 
+            margin-bottom: 30px; 
+            max-width: 350px; 
+        }
+        #disclaimer-overlay button { 
+            background: var(--text-main); 
+            color: var(--bg); 
+            width: 100%; 
+            max-width: 300px; 
+            padding: 18px; 
+            font-size: 1rem;
+            border-radius: 100px; /* Круглая кнопка */
+        }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -149,16 +250,19 @@
     </div>
 
     <div class="card">
-        <label>Brightness: <span id="b-val">128</span></label>
-        <input type="range" id="slider" min="0" max="255" value="128" 
-               oninput="document.getElementById('b-val').textContent=this.value"
-               onchange="run('brightness ' + this.value)">
+        <label>Brightness Control</label>
+        <div class="slider-container">
+            <input type="range" id="slider" min="0" max="255" value="128" 
+                   oninput="document.getElementById('b-val').textContent=this.value"
+                   onchange="run('brightness ' + this.value)">
+            <span class="slider-value" id="b-val">128</span>
+        </div>
     </div>
 
     <div class="card">
-        <label>Effects</label>
+        <label>Animations</label>
         <div class="row">
-            <button onclick="run('wave')">Wave</button>
+            <button onclick="run('wave')">Play Wave</button>
         </div>
     </div>
 
@@ -173,7 +277,7 @@
     <div class="card" style="padding: 0;">
         <div class="coming-soon">
             <span>Audio Visualizer</span>
-            <span style="font-size: 0.8rem; background: #444; padding: 4px 8px; border-radius: 4px;">Coming Soon</span>
+            <span class="badge">Coming Soon</span>
         </div>
     </div>
 
@@ -182,10 +286,10 @@
         <button class="recover" onclick="confirmRecover()">Force Recover Driver</button>
     </div>
 
-    <div class="status-bar" id="status">Ready</div>
+    <div class="status-bar" id="status">System Ready</div>
 
     <div class="disclaimer">
-        <span class="warning-text">WARNING:</span> "Force Recover" restarts the I2C driver. This may cause the device to freeze temporarily. If unresponsive, hold the Power button for 15-30 seconds to force a reboot.
+        <span class="warning-text">WARNING:</span> "Force Recover" restarts the I2C driver. This may cause the device to freeze temporarily. If unresponsive, hold the Power button for 15-30 seconds.
     </div>
 
     <script>
@@ -208,28 +312,33 @@
 
         async function run(cmd) {
             const statusEl = document.getElementById('status');
-            statusEl.textContent = `> glyphctl ${cmd}`;
+            statusEl.style.color = 'var(--text-muted)';
+            statusEl.textContent = `> ${cmd}`;
             
             try {
+                let output = '';
+                
                 if (typeof ksuwebui !== 'undefined') {
-                    const res = ksuwebui.exec(`/system/bin/glyphctl ${cmd}`);
-                    statusEl.textContent = res ? res.trim() : 'OK (no output)';
-                    return;
-                } 
-                if (typeof ksu !== 'undefined') {
-                    ksu.exec(`/system/bin/glyphctl ${cmd}`, '{}', (errno, stdout, stderr) => {
-                        if (errno !== 0) statusEl.textContent = `Error (${errno}): ${stderr}`;
-                        else statusEl.textContent = stdout.trim() || 'OK (no output)';
+                    output = ksuwebui.exec(`/system/bin/glyphctl ${cmd}`);
+                } else if (typeof ksu !== 'undefined') {
+                    return new Promise(resolve => {
+                        ksu.exec(`/system/bin/glyphctl ${cmd}`, '{}', (errno, stdout, stderr) => {
+                            statusEl.style.color = errno !== 0 ? 'var(--danger)' : 'var(--accent)';
+                            statusEl.textContent = errno !== 0 ? `Error: ${stderr}` : (stdout.trim() || 'OK');
+                            resolve();
+                        });
                     });
-                    return;
-                }
-                if (typeof exec === 'function') {
+                } else if (typeof exec === 'function') {
                     const res = await exec(`/system/bin/glyphctl ${cmd}`);
-                    statusEl.textContent = res.errno !== 0 ? `Error: ${res.stderr}` : res.stdout.trim();
-                    return;
+                    output = res.errno !== 0 ? `Error: ${res.stderr}` : res.stdout.trim();
+                } else {
+                    output = 'Error: no exec bridge found';
                 }
-                statusEl.textContent = 'Error: no exec bridge found';
+                
+                statusEl.style.color = 'var(--accent)';
+                statusEl.textContent = output.trim() || 'OK';
             } catch (e) {
+                statusEl.style.color = 'var(--danger)';
                 statusEl.textContent = `JS Error: ${e.message}`;
             }
         }
